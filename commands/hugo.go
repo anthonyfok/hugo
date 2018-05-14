@@ -781,6 +781,15 @@ func (c *commandeer) newWatcher(dirList ...string) (*watcher.Batcher, error) {
 						if ev.Op&fsnotify.Chmod == fsnotify.Chmod {
 							continue
 						}
+						if ev.Op&fsnotify.Remove == fsnotify.Remove {
+							for _, configFile := range c.configFiles {
+								c.Logger.FEEDBACK.Println(configFile, "disappeared, waiting for it to come back...")
+								for watcher.Add(configFile) != nil {
+									time.Sleep(100 * time.Millisecond)
+								}
+								c.Logger.FEEDBACK.Println(configFile, "is back!")
+							}
+						}
 						// Config file changed. Need full rebuild.
 						c.fullRebuild()
 						break
